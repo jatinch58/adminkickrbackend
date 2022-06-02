@@ -2,6 +2,8 @@ const Joi = require("joi");
 const admindb = require("../models/admin");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const categorydb = require("../models/category");
+const subcategorydb = require("../models/subCategory");
 ////////////////===================admin login======================///////////
 exports.login = async (req, res) => {
   try {
@@ -79,5 +81,143 @@ exports.isAdmin = async (req, res) => {
     res.status(200).send({ message: "OH!! HEY admin..." });
   } catch (e) {
     res.status(400).send({ message: e.name });
+  }
+};
+//========================add category=========================//
+exports.addCategory = async (req, res) => {
+  try {
+    const { body } = req;
+    const categorySchema = Joi.object()
+      .keys({
+        categoryName: Joi.string().required(),
+      })
+      .required();
+    const validate = categorySchema.validate(body);
+    if (validate.error) {
+      res.status(400).send({ message: validate.error.details[0].message });
+    } else {
+      const newCategory = new categorydb({
+        categoryName: req.body.categoryName,
+      });
+      newCategory.save().then(() => {
+        res.status(200).send({
+          message: req.body.categoryName + " category added sucessfully",
+        });
+      });
+    }
+  } catch (e) {
+    res.status(500).send({ message: e.name });
+  }
+};
+///=====================get category=========================//
+exports.getCategory = async (req, res) => {
+  try {
+    const categories = await categorydb.find();
+    if (categories) {
+      res.status(200).send(categories);
+    } else {
+      res.status(500).send({ message: "Something bad happened" });
+    }
+  } catch (e) {
+    res.status(500).send({ message: e.name });
+  }
+};
+//=======================delete category====================//
+exports.deleteCategory = async (req, res) => {
+  try {
+    const categorySchema = Joi.object()
+      .keys({
+        categoryId: Joi.string().required(),
+      })
+      .required();
+    const validate = categorySchema.validate(req.body);
+    if (validate.error) {
+      res.status(400).send({ message: validate.error.details[0].message });
+    } else {
+      const result = await categorydb.findByIdAndDelete(req.body.categoryId);
+      if (result) {
+        res.status(200).send({
+          message: "Category deleted sucessfully of id: " + req.body.categoryId,
+        });
+      } else {
+        res
+          .status(404)
+          .send({ message: "No category found of id: " + req.body.categoryId });
+      }
+    }
+  } catch (e) {
+    res.status(500).send({ message: e.name });
+  }
+};
+
+exports.addSubCategory = async (req, res) => {
+  try {
+    const subCategorySchema = Joi.object()
+      .keys({
+        categoryName: Joi.string().required(),
+        subCategoryName: Joi.string().required(),
+      })
+      .required();
+    const validate = subCategorySchema.validate(req.body);
+    if (validate.error) {
+      res.status(400).send({ message: validate.error.details[0].message });
+    } else {
+      const newSubCategory = new subcategorydb({
+        categoryName: req.body.categoryName,
+        subCategoryName: req.body.subCategoryName,
+      });
+      newSubCategory.save().then(() => {
+        res.status(200).send({
+          message:
+            req.body.subCategoryName +
+            " added sucessfully in category " +
+            req.body.categoryName,
+        });
+      });
+    }
+  } catch (e) {
+    res.status(500).send({ message: e.name });
+  }
+};
+exports.getSubCategory = async (req, res) => {
+  try {
+    const subCategories = await subcategorydb.find();
+    if (subCategories) {
+      res.status(200).send(subCategories);
+    } else {
+      res.status(500).send({ message: "Somthing bad happened" });
+    }
+  } catch (e) {
+    res.status(500).send({ message: e.name });
+  }
+};
+exports.deleteSubCategory = async (req, res) => {
+  try {
+    const deleteSchema = Joi.object()
+      .keys({
+        subCategoryId: Joi.string().required(),
+      })
+      .required();
+    const validate = deleteSchema.validate(req.body);
+    if (validate.error) {
+      res.status(400).send({ message: deleteSchema.error.details[0].message });
+    } else {
+      const result = await subcategorydb.findByIdAndDelete(
+        req.body.subCategoryId
+      );
+      if (result) {
+        res
+          .status(200)
+          .send({ message: req.body.subCategoryId + " deleted sucessfully" });
+      } else {
+        res
+          .status(404)
+          .send({
+            message: "No subCategory found of id: " + req.body.subCategoryId,
+          });
+      }
+    }
+  } catch (e) {
+    res.status(500).send({ message: e.name });
   }
 };
