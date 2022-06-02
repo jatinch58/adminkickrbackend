@@ -27,4 +27,18 @@ router.delete(
   isAdmin,
   admin.deleteSubCategory
 );
+router.post("/admin/addProduct", verifyToken, isAdmin, admin.addProducts);
+router.get("/admin/getProducts", verifyToken, isAdmin, admin.getProduct);
+router.get(
+  "/admin/getProductById/:productId",
+  verifyToken,
+  isAdmin,
+  admin.getProductById
+);
+router.get(
+  "/admin/getProductByCategory/:category/:subCategory",
+  verifyToken,
+  isAdmin,
+  admin.getProductByCategory
+);
 module.exports = router;

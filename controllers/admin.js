@@ -4,6 +4,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const categorydb = require("../models/category");
 const subcategorydb = require("../models/subCategory");
+const productdb = require("../models/product");
 ////////////////===================admin login======================///////////
 exports.login = async (req, res) => {
   try {
@@ -29,7 +30,6 @@ exports.login = async (req, res) => {
           const token = jwt.sign({ _id: p }, "123456", {
             expiresIn: "24h",
           });
-          console.log(p, token);
           res.status(200).send({ message: "Login successful", token: token });
         } else {
           res.status(401).send({ message: "Invalid password" });
@@ -156,6 +156,7 @@ exports.addSubCategory = async (req, res) => {
       .keys({
         categoryName: Joi.string().required(),
         subCategoryName: Joi.string().required(),
+        iconUrl: Joi.string().required(),
       })
       .required();
     const validate = subCategorySchema.validate(req.body);
@@ -165,6 +166,7 @@ exports.addSubCategory = async (req, res) => {
       const newSubCategory = new subcategorydb({
         categoryName: req.body.categoryName,
         subCategoryName: req.body.subCategoryName,
+        iconUrl: req.body.iconUrl,
       });
       newSubCategory.save().then(() => {
         res.status(200).send({
@@ -210,12 +212,93 @@ exports.deleteSubCategory = async (req, res) => {
           .status(200)
           .send({ message: req.body.subCategoryId + " deleted sucessfully" });
       } else {
-        res
-          .status(404)
-          .send({
-            message: "No subCategory found of id: " + req.body.subCategoryId,
-          });
+        res.status(404).send({
+          message: "No subCategory found of id: " + req.body.subCategoryId,
+        });
       }
+    }
+  } catch (e) {
+    res.status(500).send({ message: e.name });
+  }
+};
+exports.addProducts = async (req, res) => {
+  try {
+    const productSchema = Joi.object()
+      .keys({
+        productName: Joi.string().required(),
+        productPrice: Joi.number().required(),
+        productOfferPrice: Joi.number().required(),
+        productMainImgUrl: Joi.string().required(),
+        productImgUrl: Joi.array().items(Joi.string()).required(),
+        productCategory: Joi.string().required(),
+        productSubCategory: Joi.string().required(),
+        productStock: Joi.boolean().required(),
+        productDescription: Joi.string().required(),
+        demolink: Joi.string().required(),
+      })
+      .required();
+    const validate = productSchema.validate(req.body);
+    if (validate.error) {
+      res.status(400).send({ message: validate.error.details[0].message });
+    } else {
+      const newProduct = new productdb({
+        productName: req.body.productName,
+        productPrice: req.body.productPrice,
+        productOfferPrice: req.body.productOfferPrice,
+        productMainImgUrl: req.body.productMainImgUrl,
+        productImgUrl: req.body.productImgUrl,
+        productCategory: req.body.productCategory,
+        productSubCategory: req.body.productSubCategory,
+        productStock: req.body.productStock,
+        productDescription: req.body.productDescription,
+        demolink: req.body.demolink,
+      });
+      newProduct.save().then(() => {
+        res
+          .status(200)
+          .send({ message: req.body.productName + " added sucessfully" });
+      });
+    }
+  } catch (e) {
+    res.status(500).send({ message: e.name });
+  }
+};
+exports.getProduct = async (req, res) => {
+  try {
+    const products = await productdb.find();
+    if (products) {
+      res.status(200).send(products);
+    } else {
+      res.status(500).send({ message: "Something bad happened" });
+    }
+  } catch (e) {
+    res.status(500).send({ message: e.name });
+  }
+};
+exports.getProductById = async (req, res) => {
+  try {
+    const product = await productdb.findById(req.params.productId);
+    if (product) {
+      res.status(200).send(product);
+    } else {
+      res
+        .status(404)
+        .send({ message: "No product found of id: " + req.params.productId });
+    }
+  } catch (e) {
+    res.status(500).send({ message: e.name });
+  }
+};
+exports.getProductByCategory = async (req, res) => {
+  try {
+    const product = await productdb.find({
+      productCategory: req.params.category,
+      productSubCategory: req.params.subCategory,
+    });
+    if (product) {
+      res.status(200).send(product);
+    } else {
+      res.status(500).send({ message: "Something bad happened" });
     }
   } catch (e) {
     res.status(500).send({ message: e.name });
