@@ -5,7 +5,7 @@ const jwt = require("jsonwebtoken");
 const categorydb = require("../models/category");
 const subcategorydb = require("../models/subCategory");
 const productdb = require("../models/product");
-////////////////===================admin login======================///////////
+//============================================admin login===========================================//
 exports.login = async (req, res) => {
   try {
     const { body } = req;
@@ -116,7 +116,7 @@ exports.getCategory = async (req, res) => {
     if (categories) {
       res.status(200).send(categories);
     } else {
-      res.status(500).send({ message: "Something bad happened" });
+      res.status(404).send({ message: "Not found" });
     }
   } catch (e) {
     res.status(500).send({ message: e.name });
