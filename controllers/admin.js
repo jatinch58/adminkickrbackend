@@ -320,9 +320,23 @@ exports.getUsers = async (req, res) => {
 };
 exports.showCarts = async (req, res) => {
   try {
-    const carts = await cartdb.find({});
+    const carts = await cartdb.find();
     if (carts) {
       res.status(200).send(carts);
+    } else {
+      res.status(500).send({ message: "Something bad happenned" });
+    }
+  } catch (e) {
+    return res.status(500).send({ message: e.name });
+  }
+};
+exports.showDetailedCart = async (req, res) => {
+  try {
+    const cart = await cartdb
+      .findById(req.params.id)
+      .populate(["cartBy", "cart.productId"]);
+    if (cart) {
+      res.status(200).send(cart);
     } else {
       res.status(500).send({ message: "Something bad happenned" });
     }
