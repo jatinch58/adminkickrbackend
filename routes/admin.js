@@ -41,4 +41,5 @@ router.get(
   isAdmin,
   admin.getProductByCategory
 );
+router.get("/admin/getUsers", verifyToken, isAdmin, admin.getUsers);
 module.exports = router;
