@@ -42,4 +42,5 @@ router.get(
   admin.getProductByCategory
 );
 router.get("/admin/getUsers", verifyToken, isAdmin, admin.getUsers);
+router.get("/admin/getCarts", verifyToken, isAdmin, admin.showCarts);
 module.exports = router;

@@ -6,6 +6,7 @@ const categorydb = require("../models/category");
 const subcategorydb = require("../models/subCategory");
 const productdb = require("../models/product");
 const userdb = require("../models/user");
+const cartdb = require("../models/cart");
 //============================================admin login===========================================//
 exports.login = async (req, res) => {
   try {
@@ -315,5 +316,17 @@ exports.getUsers = async (req, res) => {
     }
   } catch (e) {
     res.status(500).send({ message: e.name });
+  }
+};
+exports.showCarts = async (req, res) => {
+  try {
+    const carts = await cartdb.find({});
+    if (carts) {
+      res.status(200).send(carts);
+    } else {
+      res.status(500).send({ message: "Something bad happenned" });
+    }
+  } catch (e) {
+    return res.status(500).send({ message: e.name });
   }
 };
