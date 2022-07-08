@@ -2,11 +2,18 @@ const express = require("express");
 const router = express.Router();
 const { isAdmin } = require("../middlewares/isAdmin");
 const { verifyToken } = require("../middlewares/auth");
+const { upload } = require("../middlewares/fileUpload");
 const admin = require("../controllers/admin");
 router.post("/admin/login", admin.login);
 router.post("/admin/signup", admin.signup);
 router.get("/admin/check", verifyToken, isAdmin, admin.isAdmin);
-router.post("/admin/addcategory", verifyToken, isAdmin, admin.addCategory);
+router.post(
+  "/admin/addcategory",
+  verifyToken,
+  isAdmin,
+  upload,
+  admin.addCategory
+);
 router.get("/admin/getCategory", verifyToken, isAdmin, admin.getCategory);
 router.delete(
   "/admin/deleteCategory",

@@ -2,11 +2,18 @@ const Joi = require("joi");
 const admindb = require("../models/admin");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const AWS = require("aws-sdk");
+const { v4: uuidv4 } = require("uuid");
 const categorydb = require("../models/category");
 const subcategorydb = require("../models/subCategory");
 const productdb = require("../models/product");
 const userdb = require("../models/user");
 const cartdb = require("../models/cart");
+const s3 = new AWS.S3({
+  accessKeyId: process.env.AWS_ID,
+  secretAccessKey: process.env.AWS_SECRET,
+  Bucket: process.env.BUCKET_NAME,
+});
 //============================================admin login===========================================//
 exports.login = async (req, res) => {
   try {
@@ -29,7 +36,7 @@ exports.login = async (req, res) => {
         );
         if (validPassword) {
           const p = admin._id.toString();
-          const token = jwt.sign({ _id: p }, "123456", {
+          const token = jwt.sign({ _id: p }, process.env.TOKEN_KEY, {
             expiresIn: "24h",
           });
           res.status(200).send({ message: "Login successful", token: token });
@@ -88,25 +95,29 @@ exports.isAdmin = async (req, res) => {
 //========================add category=========================//
 exports.addCategory = async (req, res) => {
   try {
-    const { body } = req;
-    const categorySchema = Joi.object()
-      .keys({
-        categoryName: Joi.string().required(),
-      })
-      .required();
-    const validate = categorySchema.validate(body);
-    if (validate.error) {
-      res.status(400).send({ message: validate.error.details[0].message });
-    } else {
-      const newCategory = new categorydb({
-        categoryName: req.body.categoryName,
-      });
-      newCategory.save().then(() => {
-        res.status(200).send({
-          message: req.body.categoryName + " category added sucessfully",
+    let myFile = req.file.originalname.split(".");
+    const fileType = myFile[myFile.length - 1];
+    const params = {
+      Bucket: process.env.AWS_BUCKET_NAME,
+      Key: `${uuidv4()}.${fileType}`,
+      Body: req.file.buffer,
+    };
+
+    s3.upload(params, async (error, data) => {
+      if (error) {
+        return res.status(500).send(error);
+      } else {
+        const newCategory = new categorydb({
+          categoryName: req.body.categoryName,
+          iconUrl: data.Location,
         });
-      });
-    }
+        newCategory.save().then(() => {
+          res.status(200).send({
+            message: req.body.categoryName + " category added sucessfully",
+          });
+        });
+      }
+    });
   } catch (e) {
     res.status(500).send({ message: e.name });
   }
@@ -127,26 +138,44 @@ exports.getCategory = async (req, res) => {
 //=======================delete category====================//
 exports.deleteCategory = async (req, res) => {
   try {
-    const categorySchema = Joi.object()
-      .keys({
-        categoryId: Joi.string().required(),
-      })
-      .required();
-    const validate = categorySchema.validate(req.body);
-    if (validate.error) {
-      res.status(400).send({ message: validate.error.details[0].message });
-    } else {
-      const result = await categorydb.findByIdAndDelete(req.body.categoryId);
-      if (result) {
-        res.status(200).send({
-          message: "Category deleted sucessfully of id: " + req.body.categoryId,
-        });
-      } else {
-        res
-          .status(404)
-          .send({ message: "No category found of id: " + req.body.categoryId });
-      }
-    }
+    let p = req.body.iconUrl;
+    p = p.split("/");
+    p = p[p.length - 1];
+    const params = {
+      Bucket: process.env.AWS_BUCKET_NAME,
+      Key: p,
+    };
+    const s3delete = function (params) {
+      return new Promise((resolve, reject) => {
+        s3.createBucket(
+          {
+            Bucket: params.Bucket,
+          },
+          function () {
+            s3.deleteObject(params, async function (err, data) {
+              if (err) res.status(500).send({ message: err });
+              else {
+                const result = await categorydb.findByIdAndDelete(
+                  req.body.categoryId
+                );
+                if (result) {
+                  res.status(200).send({
+                    message:
+                      "Category deleted sucessfully of id: " +
+                      req.body.categoryId,
+                  });
+                } else {
+                  res.status(404).send({
+                    message: "No category found of id: " + req.body.categoryId,
+                  });
+                }
+              }
+            });
+          }
+        );
+      });
+    };
+    s3delete(params);
   } catch (e) {
     res.status(500).send({ message: e.name });
   }
