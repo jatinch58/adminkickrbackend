@@ -25,6 +25,7 @@ router.post(
   "/admin/addSubCategory",
   verifyToken,
   isAdmin,
+  upload,
   admin.addSubCategory
 );
 router.get("/admin/getSubCategory", verifyToken, isAdmin, admin.getSubCategory);
