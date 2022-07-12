@@ -522,3 +522,61 @@ exports.deleteProduct = async (req, res) => {
     return res.status(500).send({ message: e.name });
   }
 };
+exports.updateMainImage = async (req, res) => {
+  try {
+    let myFile = req.file.originalname.split(".");
+    const fileType = myFile[myFile.length - 1];
+    const params = {
+      Bucket: process.env.AWS_BUCKET_NAME,
+      Key: `${uuidv4()}.${fileType}`,
+      Body: req.file.buffer,
+    };
+    s3.upload(params, async (error, dataResult) => {
+      if (error) {
+        return res.status(500).send(error);
+      } else {
+        let p = req.body.fileUrl;
+        p = p.split("/");
+        p = p[p.length - 1];
+        const params = {
+          Bucket: process.env.AWS_BUCKET_NAME,
+          Key: p,
+        };
+        const s3delete = function (params) {
+          return new Promise((resolve, reject) => {
+            s3.createBucket(
+              {
+                Bucket: params.Bucket,
+              },
+              function () {
+                s3.deleteObject(params, async function (err, data) {
+                  if (err) res.status(500).send({ message: err });
+                  else {
+                    const result = await productdb.findByIdAndUpdate(
+                      req.body.id,
+                      {
+                        productMainImgUrl: dataResult.Location,
+                      }
+                    );
+                    if (result) {
+                      res
+                        .status(200)
+                        .send({ message: "Image updated successfully" });
+                    } else {
+                      res
+                        .status(500)
+                        .send({ message: "Something bad happened" });
+                    }
+                  }
+                });
+              }
+            );
+          });
+        };
+        s3delete(params);
+      }
+    });
+  } catch (e) {
+    res.status(500).send({ message: e.name });
+  }
+};

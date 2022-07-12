@@ -82,4 +82,11 @@ router.delete(
   isAdmin,
   admin.deleteProduct
 );
+router.put(
+  "/admin/updateMainImage",
+  verifyToken,
+  isAdmin,
+  upload,
+  admin.updateMainImage
+);
 module.exports = router;
