@@ -8,7 +8,7 @@ router.post("/admin/login", admin.login);
 router.post("/admin/signup", admin.signup);
 router.get("/admin/check", verifyToken, isAdmin, admin.isAdmin);
 router.post(
-  "/admin/addcategory",
+  "/admin/addCategory",
   verifyToken,
   isAdmin,
   upload,
@@ -35,8 +35,27 @@ router.delete(
   isAdmin,
   admin.deleteSubCategory
 );
-router.post("/admin/addProduct", verifyToken, isAdmin, admin.addProducts);
+router.post(
+  "/admin/addProduct",
+  verifyToken,
+  isAdmin,
+  upload,
+  admin.addProducts
+);
 router.get("/admin/getProducts", verifyToken, isAdmin, admin.getProduct);
+router.put(
+  "/admin/addProductImages",
+  verifyToken,
+  isAdmin,
+  upload,
+  admin.addProductImages
+);
+router.delete(
+  "/admin/deleteProductImages",
+  verifyToken,
+  isAdmin,
+  admin.deleteProductImage
+);
 router.get(
   "/admin/getProductById/:productId",
   verifyToken,
@@ -56,5 +75,11 @@ router.get(
   verifyToken,
   isAdmin,
   admin.showDetailedCart
+);
+router.delete(
+  "/admin/deleteProduct/:id",
+  verifyToken,
+  isAdmin,
+  admin.deleteProduct
 );
 module.exports = router;

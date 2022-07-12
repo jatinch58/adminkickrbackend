@@ -296,54 +296,116 @@ exports.deleteSubCategory = async (req, res) => {
 };
 exports.addProducts = async (req, res) => {
   try {
-    const productSchema = Joi.object()
-      .keys({
-        productName: Joi.string().required(),
-        productPrice: Joi.number().required(),
-        productOfferPrice: Joi.number().required(),
-        productMainImgUrl: Joi.string().required(),
-        productImgUrl: Joi.array().items(Joi.string()).required(),
-        productCategory: Joi.string().required(),
-        productSubCategory: Joi.string().required(),
-        productStock: Joi.boolean().required(),
-        productDescription: Joi.string().required(),
-        demolink: Joi.string().required(),
-      })
-      .required();
-    const validate = productSchema.validate(req.body);
-    if (validate.error) {
-      res.status(400).send({ message: validate.error.details[0].message });
-    } else {
-      const newProduct = new productdb({
-        productName: req.body.productName,
-        productPrice: req.body.productPrice,
-        productOfferPrice: req.body.productOfferPrice,
-        productMainImgUrl: req.body.productMainImgUrl,
-        productImgUrl: req.body.productImgUrl,
-        productCategory: req.body.productCategory,
-        productSubCategory: req.body.productSubCategory,
-        productStock: req.body.productStock,
-        productDescription: req.body.productDescription,
-        demolink: req.body.demolink,
-      });
-      newProduct.save().then(() => {
-        res
-          .status(200)
-          .send({ message: req.body.productName + " added sucessfully" });
-      });
-    }
+    let myFile = req.file.originalname.split(".");
+    const fileType = myFile[myFile.length - 1];
+    const params = {
+      Bucket: process.env.AWS_BUCKET_NAME,
+      Key: `${uuidv4()}.${fileType}`,
+      Body: req.file.buffer,
+    };
+    s3.upload(params, async (error, data) => {
+      if (error) {
+        return res.status(500).send(error);
+      } else {
+        const newProduct = new productdb({
+          productName: req.body.productName,
+          productPrice: req.body.productPrice,
+          productOfferPrice: req.body.productOfferPrice,
+          productMainImgUrl: data.Location,
+          productCategory: req.body.productCategory,
+          productSubCategory: req.body.productSubCategory,
+          productStock: req.body.productStock,
+          productDescription: req.body.productDescription,
+          demolink: req.body.demolink,
+        });
+        newProduct.save().then(() => {
+          res
+            .status(200)
+            .send({ message: req.body.productName + " added sucessfully" });
+        });
+      }
+    });
+  } catch (e) {
+    res.status(500).send({ message: e.name });
+  }
+};
+exports.addProductImages = async (req, res) => {
+  try {
+    let myFile = req.file.originalname.split(".");
+    const fileType = myFile[myFile.length - 1];
+    const params = {
+      Bucket: process.env.AWS_BUCKET_NAME,
+      Key: `${uuidv4()}.${fileType}`,
+      Body: req.file.buffer,
+    };
+    s3.upload(params, async (error, data) => {
+      if (error) {
+        return res.status(500).send(error);
+      } else {
+        const addImages = await productdb.findByIdAndUpdate(req.body.id, {
+          $push: { productImgUrl: data.Location },
+        });
+        if (addImages) {
+          res.status(200).send({ message: "Image uploaded successfully" });
+        } else {
+          res.status(500).send({ message: "Something bad happened" });
+        }
+      }
+    });
   } catch (e) {
     res.status(500).send({ message: e.name });
   }
 };
 exports.getProduct = async (req, res) => {
   try {
-    const products = await productdb.find();
+    const products = await productdb.find(
+      {},
+      { __v: 0 },
+      { skip: req.query.skip, limit: req.query.limit }
+    );
     if (products) {
       res.status(200).send(products);
     } else {
       res.status(500).send({ message: "Something bad happened" });
     }
+  } catch (e) {
+    res.status(500).send({ message: e.name });
+  }
+};
+exports.deleteProductImage = async (req, res) => {
+  try {
+    let p = req.body.fileUrl;
+    p = p.split("/");
+    p = p[p.length - 1];
+    const params = {
+      Bucket: process.env.AWS_BUCKET_NAME,
+      Key: p,
+    };
+    const s3delete = function (params) {
+      return new Promise((resolve, reject) => {
+        s3.createBucket(
+          {
+            Bucket: params.Bucket,
+          },
+          function () {
+            s3.deleteObject(params, async function (err, data) {
+              if (err) res.status(500).send({ message: err });
+              else {
+                const result = await productdb.findByIdAndUpdate(req.body.id, {
+                  $pull: { productImgUrl: req.body.fileUrl },
+                });
+                if (result) {
+                  res.status(200).send({ message: "Deleted successfully" });
+                } else {
+                  res.status(500).send({ message: "Something bad happened" });
+                }
+              }
+            });
+          }
+        );
+      });
+    };
+    s3delete(params);
   } catch (e) {
     res.status(500).send({ message: e.name });
   }
@@ -379,9 +441,14 @@ exports.getProductByCategory = async (req, res) => {
 };
 exports.getUsers = async (req, res) => {
   try {
-    const getUsers = await userdb.find({}, { __v: 0 });
+    const getUserCount = await userdb.find().count();
+    const getUsers = await userdb.find(
+      {},
+      { __v: 0 },
+      { skip: req.query.skip, limit: req.query.limit }
+    );
     if (getUsers) {
-      return res.status(200).send(getUsers);
+      return res.status(200).send({ count: getUserCount, result: getUsers });
     } else {
       return res.status(500).send({ message: "Something bad happened" });
     }
@@ -391,9 +458,14 @@ exports.getUsers = async (req, res) => {
 };
 exports.showCarts = async (req, res) => {
   try {
-    const carts = await cartdb.find();
+    const cartCount = await cartdb.find({}).count();
+    const carts = await cartdb.find(
+      {},
+      { __v: 0 },
+      { skip: req.query.skip, limit: req.query.limit }
+    );
     if (carts) {
-      res.status(200).send(carts);
+      res.status(200).send({ count: cartCount, result: carts });
     } else {
       res.status(500).send({ message: "Something bad happenned" });
     }
@@ -411,6 +483,41 @@ exports.showDetailedCart = async (req, res) => {
     } else {
       res.status(500).send({ message: "Something bad happenned" });
     }
+  } catch (e) {
+    return res.status(500).send({ message: e.name });
+  }
+};
+exports.deleteProduct = async (req, res) => {
+  try {
+    const result = await productdb.findById(req.params.id);
+    const objectKeys = result.productImgUrl;
+    objectKeys.push(result.productMainImgUrl);
+
+    const params = {
+      Bucket: process.env.AWS_BUCKET_NAME,
+      Delete: {
+        Objects: [],
+      },
+    };
+    objectKeys.forEach((objectKey) => {
+      let p = objectKey.split("/");
+      p = p[p.length - 1];
+      return params.Delete.Objects.push({
+        Key: p,
+      });
+    });
+    s3.deleteObjects(params, async function (err, data) {
+      if (err) {
+        res.status(404).send({ message: "Something bad happenned" });
+      } else {
+        const del = await productdb.findByIdAndDelete(req.params.id);
+        if (del) {
+          res.status(200).send({ message: "Deleted sucessfully" });
+        } else {
+          res.status(404).send({ message: "Id not found" });
+        }
+      }
+    });
   } catch (e) {
     return res.status(500).send({ message: e.name });
   }

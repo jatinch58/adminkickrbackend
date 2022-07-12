@@ -21,7 +21,6 @@ const productSchema = new Schema(
     productImgUrl: [
       {
         type: String,
-        required: true,
       },
     ],
     productCategory: {
@@ -42,7 +41,6 @@ const productSchema = new Schema(
     },
     demolink: {
       type: String,
-      required: true,
     },
     productReview: {
       type: Number,
