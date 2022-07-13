@@ -42,18 +42,26 @@ const productSchema = new Schema(
     demolink: {
       type: String,
     },
-    productReview: {
-      type: Number,
-      default: 0,
-    },
-    numberOfReviews: {
-      type: Number,
-      default: 0,
-    },
-    reviewedBy: [
+    productReview: [
       {
-        type: Schema.Types.ObjectId,
-        ref: user,
+        review: {
+          type: Number,
+        },
+        reviewBy: {
+          type: Schema.Types.ObjectId,
+          ref: user,
+        },
+      },
+    ],
+    productComments: [
+      {
+        comment: {
+          type: String,
+        },
+        commentBy: {
+          type: Schema.Types.ObjectId,
+          ref: user,
+        },
       },
     ],
   },
