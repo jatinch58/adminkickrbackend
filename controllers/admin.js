@@ -162,6 +162,63 @@ exports.updateCategoryName = async (req, res) => {
     res.status(500).send({ message: e.name });
   }
 };
+//=========================================update category icon====================================//
+exports.updateCategoryIcon = async (req, res) => {
+  try {
+    let myFile = req.file.originalname.split(".");
+    const fileType = myFile[myFile.length - 1];
+    const params = {
+      Bucket: process.env.AWS_BUCKET_NAME,
+      Key: `${uuidv4()}.${fileType}`,
+      Body: req.file.buffer,
+    };
+    s3.upload(params, async (error, data1) => {
+      if (error) {
+        return res.status(500).send(error);
+      } else {
+        let p = req.body.iconUrl;
+        p = p.split("/");
+        p = p[p.length - 1];
+        const params = {
+          Bucket: process.env.AWS_BUCKET_NAME,
+          Key: p,
+        };
+        const s3delete = function (params) {
+          return new Promise((resolve, reject) => {
+            s3.createBucket(
+              {
+                Bucket: params.Bucket,
+              },
+              function () {
+                s3.deleteObject(params, async function (err, data) {
+                  if (err) res.status(500).send({ message: err });
+                  else {
+                    const result = await categorydb.findByIdAndUpdate(
+                      req.body.id,
+                      { iconUrl: data1.Location }
+                    );
+                    if (result) {
+                      res.status(200).send({
+                        message: "icon updated",
+                      });
+                    } else {
+                      res.status(404).send({
+                        message: "somthing went wrong",
+                      });
+                    }
+                  }
+                });
+              }
+            );
+          });
+        };
+        s3delete(params);
+      }
+    });
+  } catch (e) {
+    res.status(500).send({ message: e.name });
+  }
+};
 //============================================delete category=======================================//
 exports.deleteCategory = async (req, res) => {
   try {

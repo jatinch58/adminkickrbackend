@@ -21,6 +21,13 @@ router.put(
   isAdmin,
   admin.updateCategoryName
 );
+router.put(
+  "/admin/updateCategoryIcon",
+  verifyToken,
+  isAdmin,
+  upload,
+  admin.updateCategoryIcon
+);
 router.delete(
   "/admin/deleteCategory",
   verifyToken,
