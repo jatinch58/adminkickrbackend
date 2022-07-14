@@ -135,7 +135,7 @@ exports.getCategory = async (req, res) => {
     res.status(500).send({ message: e.name });
   }
 };
-// ==========================================update category Name=========================================//
+// ==================================== update category Name =======================================//
 exports.updateCategoryName = async (req, res) => {
   try {
     const { body } = req;
@@ -162,7 +162,7 @@ exports.updateCategoryName = async (req, res) => {
     res.status(500).send({ message: e.name });
   }
 };
-//=========================================update category icon====================================//
+//========================================= update category icon====================================//
 exports.updateCategoryIcon = async (req, res) => {
   try {
     let myFile = req.file.originalname.split(".");
@@ -219,7 +219,7 @@ exports.updateCategoryIcon = async (req, res) => {
     res.status(500).send({ message: e.name });
   }
 };
-//============================================delete category=======================================//
+//=========================== delete category using category_id ====================================//
 exports.deleteCategory = async (req, res) => {
   try {
     const { body } = req;
@@ -310,6 +310,7 @@ exports.addSubCategory = async (req, res) => {
     res.status(500).send({ message: e.name });
   }
 };
+//==================================== get sub-category =============================================//
 exports.getSubCategory = async (req, res) => {
   try {
     const subCategories = await subcategorydb.find().populate("category");
@@ -322,6 +323,7 @@ exports.getSubCategory = async (req, res) => {
     res.status(500).send({ message: e.name });
   }
 };
+//================================= update sub-category details ======================================//
 exports.updateSubCategory = async (req, res) => {
   try {
     const { body } = req;
@@ -350,6 +352,7 @@ exports.updateSubCategory = async (req, res) => {
     res.status(500).send({ message: e.name });
   }
 };
+//================================= update only sub-category icon =====================================//
 exports.updateSubCategoryIcon = async (req, res) => {
   try {
     let myFile = req.file.originalname.split(".");
@@ -406,6 +409,7 @@ exports.updateSubCategoryIcon = async (req, res) => {
     res.status(500).send({ message: e.name });
   }
 };
+//================================ delete sub-category with icon also =================================//
 exports.deleteSubCategory = async (req, res) => {
   try {
     const deleteSchema = Joi.object()
@@ -462,6 +466,7 @@ exports.deleteSubCategory = async (req, res) => {
     res.status(500).send({ message: e.name });
   }
 };
+//============================== add product and it's main image only ================================//
 exports.addProducts = async (req, res) => {
   try {
     let myFile = req.file.originalname.split(".");
@@ -497,6 +502,7 @@ exports.addProducts = async (req, res) => {
     res.status(500).send({ message: e.name });
   }
 };
+//======================= add product other images(other than main image) ============================//
 exports.addProductImages = async (req, res) => {
   try {
     let myFile = req.file.originalname.split(".");
@@ -524,6 +530,7 @@ exports.addProductImages = async (req, res) => {
     res.status(500).send({ message: e.name });
   }
 };
+//=============================== get all product as array ==========================================//
 exports.getProduct = async (req, res) => {
   try {
     const products = await productdb
@@ -538,6 +545,7 @@ exports.getProduct = async (req, res) => {
     res.status(500).send({ message: e.name });
   }
 };
+//================================update product details only=========================================//
 exports.updateProduct = async (req, res) => {
   try {
     const { body } = req;
@@ -578,121 +586,7 @@ exports.updateProduct = async (req, res) => {
     res.status(500).send({ message: e.name });
   }
 };
-exports.deleteProductImage = async (req, res) => {
-  try {
-    let p = req.body.fileUrl;
-    p = p.split("/");
-    p = p[p.length - 1];
-    const params = {
-      Bucket: process.env.AWS_BUCKET_NAME,
-      Key: p,
-    };
-    const s3delete = function (params) {
-      return new Promise((resolve, reject) => {
-        s3.createBucket(
-          {
-            Bucket: params.Bucket,
-          },
-          function () {
-            s3.deleteObject(params, async function (err, data) {
-              if (err) res.status(500).send({ message: err });
-              else {
-                const result = await productdb.findByIdAndUpdate(req.body.id, {
-                  $pull: { productImgUrl: req.body.fileUrl },
-                });
-                if (result) {
-                  res.status(200).send({ message: "Deleted successfully" });
-                } else {
-                  res.status(500).send({ message: "Something bad happened" });
-                }
-              }
-            });
-          }
-        );
-      });
-    };
-    s3delete(params);
-  } catch (e) {
-    res.status(500).send({ message: e.name });
-  }
-};
-exports.getProductById = async (req, res) => {
-  try {
-    const product = await productdb.findById(req.params.productId);
-    if (product) {
-      res.status(200).send(product);
-    } else {
-      res
-        .status(404)
-        .send({ message: "No product found of id: " + req.params.productId });
-    }
-  } catch (e) {
-    res.status(500).send({ message: e.name });
-  }
-};
-exports.getProductByCategory = async (req, res) => {
-  try {
-    const product = await productdb.find({
-      productCategory: req.params.category,
-      productSubCategory: req.params.subCategory,
-    });
-    if (product) {
-      res.status(200).send(product);
-    } else {
-      res.status(500).send({ message: "Something bad happened" });
-    }
-  } catch (e) {
-    res.status(500).send({ message: e.name });
-  }
-};
-exports.getUsers = async (req, res) => {
-  try {
-    const getUserCount = await userdb.find().count();
-    const getUsers = await userdb.find(
-      {},
-      { __v: 0 },
-      { skip: req.query.skip, limit: req.query.limit }
-    );
-    if (getUsers) {
-      return res.status(200).send({ count: getUserCount, result: getUsers });
-    } else {
-      return res.status(500).send({ message: "Something bad happened" });
-    }
-  } catch (e) {
-    res.status(500).send({ message: e.name });
-  }
-};
-exports.showCarts = async (req, res) => {
-  try {
-    const cartCount = await cartdb.find({}).count();
-    const carts = await cartdb.find(
-      {},
-      { __v: 0 },
-      { skip: req.query.skip, limit: req.query.limit }
-    );
-    if (carts) {
-      res.status(200).send({ count: cartCount, result: carts });
-    } else {
-      res.status(500).send({ message: "Something bad happenned" });
-    }
-  } catch (e) {
-    return res.status(500).send({ message: e.name });
-  }
-};
-exports.showDetailedCart = async (req, res) => {
-  try {
-    const cart = await cartdb
-      .findById(req.params.id)
-      .populate(["cartBy", "cart.productId"]);
-    if (cart) {
-      res.status(200).send(cart);
-    } else {
-      res.status(500).send({ message: "Something bad happenned" });
-    }
-  } catch (e) {
-    return res.status(500).send({ message: e.name });
-  }
-};
+//================================= delete product and images also ==================================//
 exports.deleteProduct = async (req, res) => {
   try {
     const result = await productdb.findById(req.params.id);
@@ -728,6 +622,7 @@ exports.deleteProduct = async (req, res) => {
     return res.status(500).send({ message: e.name });
   }
 };
+//================================= update main  image of product ===================================//
 exports.updateMainImage = async (req, res) => {
   try {
     let myFile = req.file.originalname.split(".");
@@ -784,5 +679,126 @@ exports.updateMainImage = async (req, res) => {
     });
   } catch (e) {
     res.status(500).send({ message: e.name });
+  }
+};
+//============================ delete product images other than main image ==========================//
+exports.deleteProductImage = async (req, res) => {
+  try {
+    let p = req.body.fileUrl;
+    p = p.split("/");
+    p = p[p.length - 1];
+    const params = {
+      Bucket: process.env.AWS_BUCKET_NAME,
+      Key: p,
+    };
+    const s3delete = function (params) {
+      return new Promise((resolve, reject) => {
+        s3.createBucket(
+          {
+            Bucket: params.Bucket,
+          },
+          function () {
+            s3.deleteObject(params, async function (err, data) {
+              if (err) res.status(500).send({ message: err });
+              else {
+                const result = await productdb.findByIdAndUpdate(req.body.id, {
+                  $pull: { productImgUrl: req.body.fileUrl },
+                });
+                if (result) {
+                  res.status(200).send({ message: "Deleted successfully" });
+                } else {
+                  res.status(500).send({ message: "Something bad happened" });
+                }
+              }
+            });
+          }
+        );
+      });
+    };
+    s3delete(params);
+  } catch (e) {
+    res.status(500).send({ message: e.name });
+  }
+};
+//============================ get product using id ==================================================//
+exports.getProductById = async (req, res) => {
+  try {
+    const product = await productdb.findById(req.params.productId);
+    if (product) {
+      res.status(200).send(product);
+    } else {
+      res
+        .status(404)
+        .send({ message: "No product found of id: " + req.params.productId });
+    }
+  } catch (e) {
+    res.status(500).send({ message: e.name });
+  }
+};
+//============================ get product by category and sub-category ==============================//
+exports.getProductByCategory = async (req, res) => {
+  try {
+    const product = await productdb.find({
+      productCategory: req.params.category,
+      productSubCategory: req.params.subCategory,
+    });
+    if (product) {
+      res.status(200).send(product);
+    } else {
+      res.status(500).send({ message: "Something bad happened" });
+    }
+  } catch (e) {
+    res.status(500).send({ message: e.name });
+  }
+};
+//============================= get all users as array ===============================================//
+exports.getUsers = async (req, res) => {
+  try {
+    const getUserCount = await userdb.find().count();
+    const getUsers = await userdb.find(
+      {},
+      { __v: 0 },
+      { skip: req.query.skip, limit: req.query.limit }
+    );
+    if (getUsers) {
+      return res.status(200).send({ count: getUserCount, result: getUsers });
+    } else {
+      return res.status(500).send({ message: "Something bad happened" });
+    }
+  } catch (e) {
+    res.status(500).send({ message: e.name });
+  }
+};
+//============================= get all user's cart as array ==========================================//
+exports.showCarts = async (req, res) => {
+  try {
+    const cartCount = await cartdb.find({}).count();
+    const carts = await cartdb.find(
+      {},
+      { __v: 0 },
+      { skip: req.query.skip, limit: req.query.limit }
+    );
+    if (carts) {
+      res.status(200).send({ count: cartCount, result: carts });
+    } else {
+      res.status(500).send({ message: "Something bad happenned" });
+    }
+  } catch (e) {
+    return res.status(500).send({ message: e.name });
+  }
+};
+//============================= get cart's details using user_id ======================================//
+exports.showDetailedCart = async (req, res) => {
+  try {
+    const cart = await cartdb
+      .findById(req.params.id)
+      .populate(["cartBy", "cart.productId"]);
+    if (cart) {
+      res.status(200).send(cart);
+    } else {
+      res.status(500).send({ message: "Something bad happenned" });
+    }
+  } catch (e) {
+    return res.status(500).send({ message: e.name });
   }
 };
