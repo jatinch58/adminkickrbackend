@@ -135,6 +135,33 @@ exports.getCategory = async (req, res) => {
     res.status(500).send({ message: e.name });
   }
 };
+// ==========================================update category Name=========================================//
+exports.updateCategoryName = async (req, res) => {
+  try {
+    const { body } = req;
+    const categorySchema = Joi.object()
+      .keys({
+        id: Joi.string().required(),
+        categoryName: Joi.string().required(),
+      })
+      .required();
+    const result1 = categorySchema.validate(body);
+    if (result1.error) {
+      res.status(400).send({ message: result1.error.details[0].message });
+    } else {
+      const result = await categorydb.findByIdAndUpdate(req.body.id, {
+        categoryName: req.body.categoryName,
+      });
+      if (result) {
+        res.status(200).send({ message: "Done" });
+      } else {
+        res.status(500).send({ message: "Something went wrong" });
+      }
+    }
+  } catch (e) {
+    res.status(500).send({ message: e.name });
+  }
+};
 //============================================delete category=======================================//
 exports.deleteCategory = async (req, res) => {
   try {
@@ -358,11 +385,9 @@ exports.addProductImages = async (req, res) => {
 };
 exports.getProduct = async (req, res) => {
   try {
-    const products = await productdb.find(
-      {},
-      { __v: 0 },
-      { skip: req.query.skip, limit: req.query.limit }
-    );
+    const products = await productdb
+      .find({}, { __v: 0 }, { skip: req.query.skip, limit: req.query.limit })
+      .populate(["productCategory", "productSubCategory"]);
     if (products) {
       res.status(200).send(products);
     } else {

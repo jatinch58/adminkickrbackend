@@ -1,5 +1,7 @@
 const { model, Schema } = require("mongoose");
 const user = require("./user");
+const category = require("./category");
+const subCategory = require("./subCategory");
 const productSchema = new Schema(
   {
     productName: {
@@ -26,10 +28,12 @@ const productSchema = new Schema(
     productCategory: {
       type: Schema.Types.ObjectId,
       required: true,
+      ref: category,
     },
     productSubCategory: {
       type: Schema.Types.ObjectId,
       required: true,
+      ref: subCategory,
     },
     productStock: {
       type: Boolean,

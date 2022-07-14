@@ -15,7 +15,12 @@ router.post(
   admin.addCategory
 );
 router.get("/admin/getCategory", verifyToken, isAdmin, admin.getCategory);
-router.put("/admin/changeCategoryName");
+router.put(
+  "/admin/updateCategoryName",
+  verifyToken,
+  isAdmin,
+  admin.updateCategoryName
+);
 router.delete(
   "/admin/deleteCategory",
   verifyToken,
