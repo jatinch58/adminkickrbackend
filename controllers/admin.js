@@ -14,7 +14,7 @@ const s3 = new AWS.S3({
   secretAccessKey: process.env.AWS_SECRET,
   Bucket: process.env.BUCKET_NAME,
 });
-//============================================admin login===========================================//
+//=========================================== admin login===========================================//
 exports.login = async (req, res) => {
   try {
     const { body } = req;
@@ -51,7 +51,7 @@ exports.login = async (req, res) => {
     res.status(500).send({ message: e.name });
   }
 };
-//============================================admin signup=========================================//
+//=========================================== admin signup=========================================//
 exports.signup = async (req, res) => {
   try {
     const { body } = req;
@@ -84,7 +84,7 @@ exports.signup = async (req, res) => {
     res.status(500).send({ message: e.name });
   }
 };
-//=============================================isAdmin=============================================//
+//========================================== isAdmin =============================================//
 exports.isAdmin = async (req, res) => {
   try {
     res.status(200).send({ message: "OH!! HEY admin..." });
@@ -92,7 +92,7 @@ exports.isAdmin = async (req, res) => {
     res.status(400).send({ message: e.name });
   }
 };
-//=============================================add category=========================================//
+//====================================== add category ============================================//
 exports.addCategory = async (req, res) => {
   try {
     let myFile = req.file.originalname.split(".");
@@ -122,7 +122,7 @@ exports.addCategory = async (req, res) => {
     res.status(500).send({ message: e.name });
   }
 };
-///============================================get category=========================================//
+///==================================== get category =============================================//
 exports.getCategory = async (req, res) => {
   try {
     const categories = await categorydb.find();
@@ -162,7 +162,7 @@ exports.updateCategoryName = async (req, res) => {
     res.status(500).send({ message: e.name });
   }
 };
-//========================================= update category icon====================================//
+//========================================= update category icon ====================================//
 exports.updateCategoryIcon = async (req, res) => {
   try {
     let myFile = req.file.originalname.split(".");
@@ -318,6 +318,18 @@ exports.getSubCategory = async (req, res) => {
       res.status(200).send(subCategories);
     } else {
       res.status(500).send({ message: "Something bad happened" });
+    }
+  } catch (e) {
+    res.status(500).send({ message: e.name });
+  }
+};
+exports.getSubCatWithCat = async (req, res) => {
+  try {
+    const subCategories = await subcategorydb.find({ category: req.params.id });
+    if (subCategories) {
+      res.status(200).send(subCategories);
+    } else {
+      res.status(500).send({ message: "Something went wrong" });
     }
   } catch (e) {
     res.status(500).send({ message: e.name });
@@ -545,7 +557,7 @@ exports.getProduct = async (req, res) => {
     res.status(500).send({ message: e.name });
   }
 };
-//================================update product details only=========================================//
+//================================ update product details only =========================================//
 exports.updateProduct = async (req, res) => {
   try {
     const { body } = req;
