@@ -76,6 +76,7 @@ router.put(
   upload,
   admin.addProductImages
 );
+router.put("/admin/updateProduct", verifyToken, isAdmin, admin.updateProduct);
 router.delete(
   "/admin/deleteProductImages",
   verifyToken,

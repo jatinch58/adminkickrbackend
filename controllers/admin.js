@@ -538,6 +538,46 @@ exports.getProduct = async (req, res) => {
     res.status(500).send({ message: e.name });
   }
 };
+exports.updateProduct = async (req, res) => {
+  try {
+    const { body } = req;
+    const categorySchema = Joi.object()
+      .keys({
+        id: Joi.string().hex().length(24).required(),
+        productName: Joi.string().required(),
+        productPrice: Joi.number().required(),
+        productOfferPrice: Joi.number().required(),
+        productCategory: Joi.string().hex().length(24).required(),
+        productSubCategory: Joi.string().hex().length(24).required(),
+        productStock: Joi.boolean().required(),
+        productDescription: Joi.string().required(),
+        demolink: Joi.string(),
+      })
+      .required();
+    const result1 = categorySchema.validate(body);
+    if (result1.error) {
+      res.status(400).send({ message: result1.error.details[0].message });
+    } else {
+      const result = await productdb.findByIdAndUpdate(req.body.id, {
+        productName: req.body.productName,
+        productPrice: req.body.productPrice,
+        productOfferPrice: req.body.productOfferPrice,
+        productCategory: req.body.productCategory,
+        productSubCategory: req.body.productSubCategory,
+        productStock: req.body.productStock,
+        productDescription: req.body.productDescription,
+        demolink: req.body.demolink,
+      });
+      if (result) {
+        res.status(200).send({ message: "Done" });
+      } else {
+        res.status(500).send({ message: "something went wrong" });
+      }
+    }
+  } catch (e) {
+    res.status(500).send({ message: e.name });
+  }
+};
 exports.deleteProductImage = async (req, res) => {
   try {
     let p = req.body.fileUrl;
