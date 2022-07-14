@@ -208,7 +208,7 @@ exports.addSubCategory = async (req, res) => {
         return res.status(500).send(error);
       } else {
         const newSubCategory = new subcategorydb({
-          categoryName: req.body.categoryName,
+          category: req.body.category,
           subCategoryName: req.body.subCategoryName,
           iconUrl: data.Location,
         });
@@ -217,7 +217,7 @@ exports.addSubCategory = async (req, res) => {
             message:
               req.body.subCategoryName +
               " added sucessfully in category " +
-              req.body.categoryName,
+              req.body.category,
           });
         });
       }
@@ -228,11 +228,11 @@ exports.addSubCategory = async (req, res) => {
 };
 exports.getSubCategory = async (req, res) => {
   try {
-    const subCategories = await subcategorydb.find();
+    const subCategories = await subcategorydb.find().populate("category");
     if (subCategories) {
       res.status(200).send(subCategories);
     } else {
-      res.status(500).send({ message: "Somthing bad happened" });
+      res.status(500).send({ message: "Something bad happened" });
     }
   } catch (e) {
     res.status(500).send({ message: e.name });

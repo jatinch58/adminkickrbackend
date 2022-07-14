@@ -24,11 +24,11 @@ const productSchema = new Schema(
       },
     ],
     productCategory: {
-      type: String,
+      type: Schema.Types.ObjectId,
       required: true,
     },
     productSubCategory: {
-      type: String,
+      type: Schema.Types.ObjectId,
       required: true,
     },
     productStock: {
