@@ -42,6 +42,19 @@ router.post(
   admin.addSubCategory
 );
 router.get("/admin/getSubCategory", verifyToken, isAdmin, admin.getSubCategory);
+router.put(
+  "/admin/updateSubCategory",
+  verifyToken,
+  isAdmin,
+  admin.updateSubCategory
+);
+router.put(
+  "/admin/updateSubCategoryIcon",
+  verifyToken,
+  isAdmin,
+  upload,
+  admin.updateSubCategoryIcon
+);
 router.delete(
   "/admin/deleteSubCategory",
   verifyToken,

@@ -141,7 +141,7 @@ exports.updateCategoryName = async (req, res) => {
     const { body } = req;
     const categorySchema = Joi.object()
       .keys({
-        id: Joi.string().required(),
+        id: Joi.string().hex().length(24).required(),
         categoryName: Joi.string().required(),
       })
       .required();
@@ -225,7 +225,7 @@ exports.deleteCategory = async (req, res) => {
     const { body } = req;
     const adminSchema = Joi.object()
       .keys({
-        categoryId: Joi.string().required(),
+        categoryId: Joi.string().hex().length(24).required(),
         iconUrl: Joi.string().required(),
       })
       .required();
@@ -322,11 +322,95 @@ exports.getSubCategory = async (req, res) => {
     res.status(500).send({ message: e.name });
   }
 };
+exports.updateSubCategory = async (req, res) => {
+  try {
+    const { body } = req;
+    const categorySchema = Joi.object()
+      .keys({
+        id: Joi.string().hex().length(24).required(),
+        subCategoryName: Joi.string().required(),
+        category: Joi.string().hex().length(24).required(),
+      })
+      .required();
+    const result1 = categorySchema.validate(body);
+    if (result1.error) {
+      res.status(400).send({ message: result1.error.details[0].message });
+    } else {
+      const result = await subcategorydb.findByIdAndUpdate(req.body.id, {
+        subCategoryName: req.body.subCategoryName,
+        category: req.body.category,
+      });
+      if (result) {
+        res.status(200).send({ message: "Done" });
+      } else {
+        res.status(500).send({ message: "Something went wrong" });
+      }
+    }
+  } catch (e) {
+    res.status(500).send({ message: e.name });
+  }
+};
+exports.updateSubCategoryIcon = async (req, res) => {
+  try {
+    let myFile = req.file.originalname.split(".");
+    const fileType = myFile[myFile.length - 1];
+    const params = {
+      Bucket: process.env.AWS_BUCKET_NAME,
+      Key: `${uuidv4()}.${fileType}`,
+      Body: req.file.buffer,
+    };
+    s3.upload(params, async (error, data1) => {
+      if (error) {
+        return res.status(500).send(error);
+      } else {
+        let p = req.body.iconUrl;
+        p = p.split("/");
+        p = p[p.length - 1];
+        const params = {
+          Bucket: process.env.AWS_BUCKET_NAME,
+          Key: p,
+        };
+        const s3delete = function (params) {
+          return new Promise((resolve, reject) => {
+            s3.createBucket(
+              {
+                Bucket: params.Bucket,
+              },
+              function () {
+                s3.deleteObject(params, async function (err, data) {
+                  if (err) res.status(500).send({ message: err });
+                  else {
+                    const result = await subcategorydb.findByIdAndUpdate(
+                      req.body.id,
+                      { iconUrl: data1.Location }
+                    );
+                    if (result) {
+                      res.status(200).send({
+                        message: "icon updated",
+                      });
+                    } else {
+                      res.status(404).send({
+                        message: "somthing went wrong",
+                      });
+                    }
+                  }
+                });
+              }
+            );
+          });
+        };
+        s3delete(params);
+      }
+    });
+  } catch (e) {
+    res.status(500).send({ message: e.name });
+  }
+};
 exports.deleteSubCategory = async (req, res) => {
   try {
     const deleteSchema = Joi.object()
       .keys({
-        subCategoryId: Joi.string().required(),
+        subCategoryId: Joi.string().hex().length(24).required(),
         iconUrl: Joi.string().required(),
       })
       .required();
