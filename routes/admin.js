@@ -103,12 +103,6 @@ router.get(
 );
 router.get("/admin/getUsers", verifyToken, isAdmin, admin.getUsers);
 router.get("/admin/getCarts", verifyToken, isAdmin, admin.showCarts);
-router.get(
-  "/admin/getDetailedCart/:id",
-  verifyToken,
-  isAdmin,
-  admin.showDetailedCart
-);
 router.delete(
   "/admin/deleteProduct/:id",
   verifyToken,
