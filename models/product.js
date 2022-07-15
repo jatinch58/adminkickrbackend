@@ -55,16 +55,8 @@ const productSchema = new Schema(
           type: Schema.Types.ObjectId,
           ref: user,
         },
-      },
-    ],
-    productComments: [
-      {
         comment: {
           type: String,
-        },
-        commentBy: {
-          type: Schema.Types.ObjectId,
-          ref: user,
         },
       },
     ],
