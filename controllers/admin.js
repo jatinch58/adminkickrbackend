@@ -547,7 +547,11 @@ exports.addProductImages = async (req, res) => {
 exports.getProduct = async (req, res) => {
   try {
     const products = await productdb
-      .find({}, { __v: 0 }, { skip: req.query.skip, limit: req.query.limit })
+      .find(
+        {},
+        { __v: 0, productReview: 0 },
+        { skip: req.query.skip, limit: req.query.limit }
+      )
       .populate(["productCategory", "productSubCategory"]);
     if (products) {
       res.status(200).send(products);
@@ -736,7 +740,9 @@ exports.deleteProductImage = async (req, res) => {
 //============================ get product using id ===============================================//
 exports.getProductById = async (req, res) => {
   try {
-    const product = await productdb.findById(req.params.productId);
+    const product = await productdb.findById(req.params.productId, {
+      productReview: { $slice: [0, 3] },
+    });
     if (product) {
       res.status(200).send(product);
     } else {
@@ -796,5 +802,42 @@ exports.showCarts = async (req, res) => {
     }
   } catch (e) {
     return res.status(500).send({ message: e.name });
+  }
+};
+
+exports.getProductReviews = async (req, res) => {
+  try {
+    if (!req.query.productId || !req.query.start || !req.query.end) {
+      return res
+        .status(400)
+        .send({ message: "Please provide productId, start and end" });
+    }
+    const review = await productdb.findById(req.query.productId, {
+      productReview: {
+        $slice: [Number(req.query.start), Number(req.query.end)],
+      },
+      __v: 0,
+      createdAt: 0,
+      updatedAt: 0,
+      productName: 0,
+      productOfferPrice: 0,
+      productPrice: 0,
+      productCategory: 0,
+      productSubCategory: 0,
+      productDescription: 0,
+      productStock: 0,
+      productMainImgUrl: 0,
+      productImgUrl: 0,
+      demolink: 0,
+    });
+    if (review) {
+      res.status(200).send(review);
+    } else {
+      res
+        .status(404)
+        .send({ message: "No product found of id: " + req.params.productId });
+    }
+  } catch (e) {
+    res.status(500).send({ message: e });
   }
 };

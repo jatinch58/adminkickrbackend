@@ -95,6 +95,7 @@ router.get(
   isAdmin,
   admin.getProductById
 );
+router.get("/admin/getReviews", verifyToken, isAdmin, admin.getProductReviews);
 router.get(
   "/admin/getProductByCategory/:category/:subCategory",
   verifyToken,
