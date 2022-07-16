@@ -841,3 +841,34 @@ exports.getProductReviews = async (req, res) => {
     res.status(500).send({ message: e });
   }
 };
+exports.getProductRatings = async (req, res) => {
+  try {
+    const product = await productdb.findById(req.params.id);
+    if (product) {
+      const result = {
+        star1: 0,
+        star2: 0,
+        star3: 0,
+        star4: 0,
+        star5: 0,
+        overall: 0,
+        numberOfReview: 0,
+      };
+      product.productReview.map((val) => {
+        if (val.review === 1) result.star1 = result.star1 + 1;
+        else if (val.review === 2) result.star2 = result.star2 + 1;
+        else if (val.review === 3) result.star3 = result.star3 + 1;
+        else if (val.review === 4) result.star4 = result.star4 + 1;
+        else if (val.review === 5) result.star5 = result.star5 + 1;
+        result.overall += val.review;
+      });
+      result.numberOfReview = product.productReview.length;
+      result.overall = result.overall / product.productReview.length;
+      res.status(200).send(result);
+    } else {
+      res.status(404).send({ message: "not found" });
+    }
+  } catch (e) {
+    res.status(500).send({ message: e });
+  }
+};

@@ -117,4 +117,10 @@ router.put(
   upload,
   admin.updateMainImage
 );
+router.get(
+  "/admin/productRating/:id",
+  verifyToken,
+  isAdmin,
+  admin.getProductRatings
+);
 module.exports = router;
